@@ -189,7 +189,77 @@ const COMMON_QUESTIONS = [
   },
 
 
+/** extra large message */
+        {
+    id: 'messaging_product_information_session',
+    appliesTo: ['Messaging'],
+    label: 'How many product information session led by the client ?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+          {
+    id: 'messaging_demos_for_existing_products',
+    appliesTo: ['Messaging'],
+    label: 'How many demos for existing products to be attended ?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+          {
+    id: 'messaging_tailored_version_of_the_message_framework',
+    appliesTo: ['Messaging'],
+    label: 'How many tailored version of the message framework to include messaging ?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+          {
+    id: 'messaging_high_impact_touchpoints',
+    appliesTo: ['Messaging'],
+    label: 'How many high-impact touchpoints ?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+          {
+    id: 'messaging_How_many_product_messages',
+    appliesTo: ['Messaging'],
+    label: 'How many product messages ?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+          {
+    id: 'messaging_Recommendations_on_how_product',
+    appliesTo: ['Messaging'],
+    label: 'How many Recommendations on how product messaging integrates ?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+          {
+    id: 'messaging_60-minute_virtual_workshop',
+    appliesTo: ['Messaging'],
+    label: 'How many 60-minute virtual workshop',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+          {
+    id: 'messaging_do’s_and_don’ts_suggestions',
+    appliesTo: ['Messaging'],
+    label: 'How many tactical do’s and don’ts suggestions that demonstrate the organization’s ability ?',
+    type: 'static_select',
+    options: ['Zero','Four', 'Eight', 'Twelve'],
+  },
+          {
+    id: 'messaging_clear_behavioral_commitments',
+    appliesTo: ['Messaging'],
+    label: 'How many clear behavioral commitments ?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+          
 
+
+
+
+
+  
 
 
 
