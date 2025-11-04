@@ -73,6 +73,54 @@ const COMMON_QUESTIONS = [
     options: ['Zero','One', 'Two', 'Three'],
   },
 
+
+
+
+  {
+    id: 'messaging_primary_target_audiences',
+    appliesTo: ['Messaging'],
+    label: 'How many primary target audiences should be prioritised?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+    {
+    id: 'messaging_sharp_messaging_themes',
+    appliesTo: ['Messaging'],
+    label: 'How many sharp messaging themes to anchor all launch communications?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+    {
+    id: 'messaging_headline_options',
+    appliesTo: ['Messaging'],
+    label: 'How many headline options?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
   /** Naming-only (non-complexity) */
   {
     id: 'naming_creative_territories',
