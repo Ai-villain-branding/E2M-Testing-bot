@@ -103,6 +103,105 @@ const COMMON_QUESTIONS = [
 
 
 
+  
+      {
+    id: 'messaging_topline_demos_of_existing_products',
+    appliesTo: ['Messaging'],
+    label: 'How many topline demos of existing products and product roadmaps to attend?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+      {
+    id: 'messaging_facilitate_the_work',
+    appliesTo: ['Messaging'],
+    label: 'How to facilitate the work session?',
+    type: 'static_select',
+    options: ['In-person','Virtual'],
+  },
+      {
+    id: 'messaging_top-level_messages',
+    appliesTo: ['Messaging'],
+    label: 'How many top-level messages are aligned with the strategic vision?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+      {
+    id: 'messaging_rounds_of_refinement',
+    appliesTo: ['Messaging'],
+    label: 'How many rounds of refinement?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+      {
+    id: 'messaging_dedicated_rounds_of_internal_feedback',
+    appliesTo: ['Messaging'],
+    label: 'How many dedicated rounds of internal feedback and revisions to final deliverables?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+      {
+    id: 'messaging_hour_worksession_with_internal_teams',
+    appliesTo: ['Messaging'],
+    label: 'How many hour worksession with internal teams and leadership?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+      {
+    id: 'messaging_core_messages_aligned',
+    appliesTo: ['Messaging'],
+    label: 'How many core messages aligned to the Client’s strategic vision ?',
+    type: 'static_select',
+    options: ['Zero','One', 'Two', 'Three'],
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
+        {
+    id: 'messaging_interviews_with_internal_stakeholders',
+    appliesTo: ['Messaging'],
+    label: 'How many interviews with internal stakeholders?',
+    type: 'static_select',
+    options: ['Zero','Three', 'Five', 'Seven'],
+  },
+        {
+    id: 'messaging_best_practices_communication',
+    appliesTo: ['Messaging'],
+    label: 'How many best practices communication assets? ',
+    type: 'static_select',
+    options: ['Zero','Three', 'Five', 'Seven'],
+  },
+        {
+    id: 'messaging_payment_timeline_from_the_invoice',
+    appliesTo: ['Messaging'],
+    label: 'What is the payment timeline from the invoice date for work delivered to the client?',
+    type: 'static_select',
+    options: ['15 days','30 days', '45 days', '60 days'],
+  },
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
 
 
 
