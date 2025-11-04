@@ -185,6 +185,7 @@ function buildComplexityBlock(service) {
         { text: { type: 'plain_text', text: 'Light' }, value: 'Light' },
         { text: { type: 'plain_text', text: 'Medium' }, value: 'Medium' },
         { text: { type: 'plain_text', text: 'Large' }, value: 'Large' },
+        { text: { type: 'plain_text', text: 'Extra Large' }, value: 'Extra Large' }
       ],
     },
   };
