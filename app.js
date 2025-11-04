@@ -3,23 +3,20 @@ const { App } = require('@slack/bolt');
 const fetch = require('node-fetch'); // For Node <18, else remove if using Node 18+
 
 /** -----------------------------
- * Services list (unchanged)
+ * Services (unchanged)
  * ----------------------------- */
 const SERVICES = ['Messaging', 'Advertisement', 'Naming', 'Strategy'];
-
 const SERVICE_OPTIONS = SERVICES.map(s => ({
   text: { type: 'plain_text', text: s },
   value: s,
 }));
 
 /** -----------------------------
- * Question registry
- * -----------------------------
- * NOTE: We’ll dynamically decide which ones to show for Messaging
- *       based on the chosen complexity. Others behave normally.
- */
+ * Questions registry
+ * (Messaging questions exist here; we choose which to show later)
+ * ----------------------------- */
 const COMMON_QUESTIONS = [
-  // Shared (used by Messaging too, but filtered by complexity)
+  // Shared (used by Messaging too, filtered by complexity)
   {
     id: 'client_materials',
     appliesTo: ['Messaging', 'Naming', 'Strategy'],
@@ -35,16 +32,7 @@ const COMMON_QUESTIONS = [
     options: ['2', '3', '5', '8'],
   },
 
-  // Naming/Strategy only examples (unchanged)
-  {
-    id: 'stakeholders_interview',
-    appliesTo: ['Naming', 'Strategy'],
-    label: 'How many stakeholders to interview?',
-    type: 'static_select',
-    options: ['4', '8', '12', '20'],
-  },
-
-  /** Messaging-only questions **/
+  /** Messaging-only */
   {
     id: 'messaging_strategy_session',
     appliesTo: ['Messaging'],
@@ -64,154 +52,154 @@ const COMMON_QUESTIONS = [
     appliesTo: ['Messaging'],
     label: 'How many primary target audiences should be prioritised?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_sharp_messaging_themes',
     appliesTo: ['Messaging'],
     label: 'How many sharp messaging themes to anchor all launch communications?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_headline_options',
     appliesTo: ['Messaging'],
     label: 'How many headline options?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_topline_demos_of_existing_products',
     appliesTo: ['Messaging'],
     label: 'How many topline demos of existing products and product roadmaps to attend?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_facilitate_the_work',
     appliesTo: ['Messaging'],
     label: 'How to facilitate the work session?',
     type: 'static_select',
-    options: ['In-person','Virtual'],
+    options: ['In-person', 'Virtual'],
   },
   {
     id: 'messaging_top-level_messages',
     appliesTo: ['Messaging'],
     label: 'How many top-level messages are aligned with the strategic vision?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_rounds_of_refinement',
     appliesTo: ['Messaging'],
     label: 'How many rounds of refinement?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_dedicated_rounds_of_internal_feedback',
     appliesTo: ['Messaging'],
     label: 'How many dedicated rounds of internal feedback and revisions to final deliverables?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_hour_worksession_with_internal_teams',
     appliesTo: ['Messaging'],
     label: 'How many hour worksession with internal teams and leadership?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_core_messages_aligned',
     appliesTo: ['Messaging'],
     label: 'How many core messages aligned to the Client’s strategic vision?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_interviews_with_internal_stakeholders',
     appliesTo: ['Messaging'],
     label: 'How many interviews with internal stakeholders?',
     type: 'static_select',
-    options: ['Zero','Three','Five','Seven'],
+    options: ['Zero', 'Three', 'Five', 'Seven'],
   },
   {
     id: 'messaging_best_practices_communication',
     appliesTo: ['Messaging'],
     label: 'How many best practices communication assets?',
     type: 'static_select',
-    options: ['Zero','Three','Five','Seven'],
+    options: ['Zero', 'Three', 'Five', 'Seven'],
   },
   {
     id: 'messaging_payment_timeline_from_the_invoice',
     appliesTo: ['Messaging'],
     label: 'What is the payment timeline from the invoice date for work delivered to the client?',
     type: 'static_select',
-    options: ['15 days','30 days','45 days','60 days'],
+    options: ['15 days', '30 days', '45 days', '60 days'],
   },
   {
     id: 'messaging_product_information_session',
     appliesTo: ['Messaging'],
     label: 'How many product information session led by the client?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_demos_for_existing_products',
     appliesTo: ['Messaging'],
     label: 'How many demos for existing products to be attended?',
     type: 'static_select',
-    options: ['Zero','Two','Four','Six'],
+    options: ['Zero', 'Two', 'Four', 'Six'],
   },
   {
     id: 'messaging_tailored_version_of_the_message_framework',
     appliesTo: ['Messaging'],
     label: 'How many tailored version of the message framework to include messaging?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_high_impact_touchpoints',
     appliesTo: ['Messaging'],
     label: 'How many high-impact touchpoints?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_How_many_product_messages',
     appliesTo: ['Messaging'],
     label: 'How many product messages?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_Recommendations_on_how_product',
     appliesTo: ['Messaging'],
     label: 'How many recommendations on how product messaging integrates?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_60-minute_virtual_workshop',
     appliesTo: ['Messaging'],
     label: 'How many 60-minute virtual workshop?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
   {
     id: 'messaging_do’s_and_don’ts_suggestions',
     appliesTo: ['Messaging'],
     label: 'How many tactical do’s and don’ts suggestions?',
     type: 'static_select',
-    options: ['Zero','Four','Eight','Twelve'],
+    options: ['Zero', 'Four', 'Eight', 'Twelve'],
   },
   {
     id: 'messaging_clear_behavioral_commitments',
     appliesTo: ['Messaging'],
     label: 'How many clear behavioral commitments?',
     type: 'static_select',
-    options: ['Zero','One','Two','Three'],
+    options: ['Zero', 'One', 'Two', 'Three'],
   },
 
   /** Advertisement-only (no overlaps) */
@@ -276,7 +264,7 @@ const COMMON_QUESTIONS = [
 ];
 
 /** -----------------------------
- * Messaging Complexity → Questions mapping
+ * Messaging Complexity → Question IDs
  * ----------------------------- */
 const MESSAGING_COMPLEXITY_QUESTIONS = {
   Light: [
@@ -312,6 +300,7 @@ const MESSAGING_COMPLEXITY_QUESTIONS = {
  * ----------------------------- */
 function buildBlockFromQuestion(q) {
   const block_id = `${q.id}_block`;
+
   let element;
   if (q.type === 'static_select') {
     element = {
@@ -350,9 +339,11 @@ function buildComplexityBlock(service) {
     type: 'input',
     block_id: `${service.toLowerCase()}_complexity_level_block`,
     label: { type: 'plain_text', text: `${service}: Complexity Level` },
+    dispatch_action: true, // <-- IMPORTANT: fire action on selection change
     element: {
       type: 'static_select',
       action_id: 'complexity_level',
+      placeholder: { type: 'plain_text', text: 'Select complexity' },
       options: [
         { text: { type: 'plain_text', text: 'Light' }, value: 'Light' },
         { text: { type: 'plain_text', text: 'Medium' }, value: 'Medium' },
@@ -364,11 +355,11 @@ function buildComplexityBlock(service) {
 }
 
 /**
- * Build the Service Details blocks based on:
- * - selected services
- * - current (partial) state (to know chosen complexity per service)
- * - Only show Messaging questions allowed by chosen complexity
- * - Show all other services' applicable questions normally
+ * Build blocks for the details view.
+ * Returns { blocks, showSubmit }
+ * - If Messaging is selected but complexity not chosen yet => no questions + hide Submit.
+ * - Once complexity chosen => add allowed Messaging questions + show Submit.
+ * - Other services (non-Messaging) questions can be shown immediately.
  */
 function buildServiceDetailsBlocks(meta, stateValues) {
   const { companyName, projectName, date, selectedServices } = meta;
@@ -389,7 +380,10 @@ function buildServiceDetailsBlocks(meta, stateValues) {
     blocks.push(buildComplexityBlock(svc));
   });
 
-  // Figure out which questions to show
+  let messagingNeedsComplexity = false;
+  let showSubmit = true;
+
+  // Determine allowed question IDs
   const allowedIds = new Set();
 
   selectedServices.forEach(svc => {
@@ -398,11 +392,15 @@ function buildServiceDetailsBlocks(meta, stateValues) {
       const selectedComplexity =
         stateValues?.[blockId]?.complexity_level?.selected_option?.value || null;
 
-      if (selectedComplexity && MESSAGING_COMPLEXITY_QUESTIONS[selectedComplexity]) {
-        MESSAGING_COMPLEXITY_QUESTIONS[selectedComplexity].forEach(id => allowedIds.add(id));
+      if (!selectedComplexity) {
+        // complexity not chosen yet ⇒ don't show Messaging questions, and hide Submit
+        messagingNeedsComplexity = true;
+        showSubmit = false;
+      } else {
+        (MESSAGING_COMPLEXITY_QUESTIONS[selectedComplexity] || []).forEach(id => allowedIds.add(id));
       }
     } else {
-      // Non-Messaging services: include all questions that apply to them
+      // Non-Messaging: include all applicable questions right away
       COMMON_QUESTIONS
         .filter(q => q.appliesTo.includes(svc))
         .forEach(q => allowedIds.add(q.id));
@@ -415,9 +413,15 @@ function buildServiceDetailsBlocks(meta, stateValues) {
     COMMON_QUESTIONS
       .filter(q => allowedIds.has(q.id))
       .forEach(q => blocks.push(buildBlockFromQuestion(q)));
+  } else if (messagingNeedsComplexity) {
+    // Helpful hint block
+    blocks.push({
+      type: 'section',
+      text: { type: 'mrkdwn', text: '_Select a **Messaging** complexity to proceed._' },
+    });
   }
 
-  return blocks;
+  return { blocks, showSubmit };
 }
 
 /** -----------------------------
@@ -432,63 +436,43 @@ const app = new App({
 
 app.command('/service', async ({ ack, body, client }) => {
   await ack();
-  try {
-    await client.views.open({
-      trigger_id: body.trigger_id,
-      view: {
-        type: 'modal',
-        callback_id: 'service_intro_modal',
-        title: { type: 'plain_text', text: 'Project Kickoff' },
-        submit: { type: 'plain_text', text: 'Next' },
-        close: { type: 'plain_text', text: 'Cancel' },
-        blocks: [
-          { type: 'header', text: { type: 'plain_text', text: 'Submitting Details' } },
-          {
-            type: 'input',
-            block_id: 'company_name_block',
-            label: { type: 'plain_text', text: 'Company Name' },
-            element: {
-              type: 'plain_text_input',
-              action_id: 'company_name',
-              placeholder: { type: 'plain_text', text: 'Enter company name' },
-            },
-          },
-          {
-            type: 'input',
-            block_id: 'project_name_block',
-            label: { type: 'plain_text', text: 'Project Name' },
-            element: {
-              type: 'plain_text_input',
-              action_id: 'project_name',
-              placeholder: { type: 'plain_text', text: 'Enter project name' },
-            },
-          },
-          {
-            type: 'input',
-            block_id: 'date_block',
-            label: { type: 'plain_text', text: 'Date' },
-            element: {
-              type: 'datepicker',
-              action_id: 'date',
-              placeholder: { type: 'plain_text', text: 'Select a date' },
-            },
-          },
-          {
-            type: 'input',
-            block_id: 'services_block',
-            label: { type: 'plain_text', text: 'Services We Offer' },
-            element: {
-              type: 'multi_static_select',
-              action_id: 'services',
-              options: SERVICE_OPTIONS,
-            },
-          },
-        ],
-      },
-    });
-  } catch (error) {
-    console.error('Error opening service intro modal:', error);
-  }
+  await client.views.open({
+    trigger_id: body.trigger_id,
+    view: {
+      type: 'modal',
+      callback_id: 'service_intro_modal',
+      title: { type: 'plain_text', text: 'Project Kickoff' },
+      submit: { type: 'plain_text', text: 'Next' },
+      close: { type: 'plain_text', text: 'Cancel' },
+      blocks: [
+        { type: 'header', text: { type: 'plain_text', text: 'Submitting Details' } },
+        {
+          type: 'input',
+          block_id: 'company_name_block',
+          label: { type: 'plain_text', text: 'Company Name' },
+          element: { type: 'plain_text_input', action_id: 'company_name' },
+        },
+        {
+          type: 'input',
+          block_id: 'project_name_block',
+          label: { type: 'plain_text', text: 'Project Name' },
+          element: { type: 'plain_text_input', action_id: 'project_name' },
+        },
+        {
+          type: 'input',
+          block_id: 'date_block',
+          label: { type: 'plain_text', text: 'Date' },
+          element: { type: 'datepicker', action_id: 'date' },
+        },
+        {
+          type: 'input',
+          block_id: 'services_block',
+          label: { type: 'plain_text', text: 'Services We Offer' },
+          element: { type: 'multi_static_select', action_id: 'services', options: SERVICE_OPTIONS },
+        },
+      ],
+    },
+  });
 });
 
 app.view('service_intro_modal', async ({ ack, view }) => {
@@ -496,8 +480,7 @@ app.view('service_intro_modal', async ({ ack, view }) => {
   const companyName = values.company_name_block.company_name.value;
   const projectName = values.project_name_block.project_name.value;
   const date = values.date_block.date.selected_date;
-  const selectedServices =
-    values.services_block.services.selected_options.map(opt => opt.value);
+  const selectedServices = values.services_block.services.selected_options.map(o => o.value);
 
   if (!companyName || !projectName || !date || selectedServices.length === 0) {
     await ack({
@@ -513,7 +496,7 @@ app.view('service_intro_modal', async ({ ack, view }) => {
   }
 
   const meta = { companyName, projectName, date, selectedServices };
-  const blocks = buildServiceDetailsBlocks(meta, /* stateValues */ undefined);
+  const { blocks, showSubmit } = buildServiceDetailsBlocks(meta, /* stateValues */ undefined);
 
   await ack({
     response_action: 'update',
@@ -521,7 +504,8 @@ app.view('service_intro_modal', async ({ ack, view }) => {
       type: 'modal',
       callback_id: 'service_details_modal',
       title: { type: 'plain_text', text: 'Service Details' },
-      submit: { type: 'plain_text', text: 'Submit' },
+      // Hide submit until questions are visible
+      ...(showSubmit ? { submit: { type: 'plain_text', text: 'Submit' } } : {}),
       close: { type: 'plain_text', text: 'Cancel' },
       private_metadata: JSON.stringify(meta),
       blocks,
@@ -530,41 +514,34 @@ app.view('service_intro_modal', async ({ ack, view }) => {
 });
 
 /**
- * Interactivity: When a complexity value is chosen, rebuild the modal in-place
- * to include only the Messaging questions for that chosen complexity.
+ * React to complexity selection and update the modal in-place
  */
 app.action('complexity_level', async ({ ack, body, client }) => {
   await ack();
 
   const meta = JSON.parse(body.view.private_metadata || '{}');
   const stateValues = body.view.state.values;
+  const { blocks, showSubmit } = buildServiceDetailsBlocks(meta, stateValues);
 
-  const blocks = buildServiceDetailsBlocks(meta, stateValues);
-
-  try {
-    await client.views.update({
-      view_id: body.view.id,
-      hash: body.view.hash, // prevent race condition
-      view: {
-        type: 'modal',
-        callback_id: 'service_details_modal',
-        title: { type: 'plain_text', text: 'Service Details' },
-        submit: { type: 'plain_text', text: 'Submit' },
-        close: { type: 'plain_text', text: 'Cancel' },
-        private_metadata: body.view.private_metadata,
-        blocks,
-      },
-    });
-  } catch (err) {
-    console.error('Error updating view on complexity change:', err);
-  }
+  await client.views.update({
+    view_id: body.view.id,
+    hash: body.view.hash, // avoid race conditions
+    view: {
+      type: 'modal',
+      callback_id: 'service_details_modal',
+      title: { type: 'plain_text', text: 'Service Details' },
+      ...(showSubmit ? { submit: { type: 'plain_text', text: 'Submit' } } : {}),
+      close: { type: 'plain_text', text: 'Cancel' },
+      private_metadata: body.view.private_metadata,
+      blocks,
+    },
+  });
 });
 
 app.view('service_details_modal', async ({ ack, view, body }) => {
   await ack();
 
-  const { companyName, projectName, date, selectedServices } =
-    JSON.parse(view.private_metadata || '{}');
+  const { companyName, projectName, date, selectedServices } = JSON.parse(view.private_metadata || '{}');
   const values = view.state.values;
 
   const result = {
@@ -576,26 +553,23 @@ app.view('service_details_modal', async ({ ack, view, body }) => {
     service_details: {},
   };
 
-  // 1) Read per-service complexity answers
+  // Read per-service complexity first
   const complexityMap = {};
   selectedServices.forEach(service => {
     const blockId = `${service.toLowerCase()}_complexity_level_block`;
-    const complexity =
-      values[blockId]?.complexity_level?.selected_option?.value || null;
-
-    result.service_details[service] = {
-      complexity_level: complexity,
-    };
+    const complexity = values[blockId]?.complexity_level?.selected_option?.value || null;
+    result.service_details[service] = { complexity_level: complexity };
     complexityMap[service] = complexity;
   });
 
-  // 2) Read shown question answers only (those blocks exist in the view)
+  // Read only the blocks present (what the user actually saw)
   COMMON_QUESTIONS.forEach(q => {
     const blockId = `${q.id}_block`;
-    if (!values[blockId]) return; // not in the current view
+    if (!values[blockId]) return;
 
-    let answer;
     const el = values[blockId][q.id];
+    let answer = null;
+
     if (q.type === 'static_select') {
       answer = el?.selected_option?.value || null;
     } else if (q.type === 'multi_static_select') {
@@ -605,29 +579,25 @@ app.view('service_details_modal', async ({ ack, view, body }) => {
     }
 
     selectedServices.forEach(svc => {
-      // Apply Messaging filtering logic
       if (svc === 'Messaging') {
-        const allowedIds = MESSAGING_COMPLEXITY_QUESTIONS[complexityMap[svc]] || [];
-        if (!allowedIds.includes(q.id)) return; // skip irrelevant Messaging questions
+        const allowed = MESSAGING_COMPLEXITY_QUESTIONS[complexityMap[svc]] || [];
+        if (!allowed.includes(q.id)) return;
       }
-
       if (!q.appliesTo.includes(svc)) return;
       if (!result.service_details[svc]) result.service_details[svc] = {};
       result.service_details[svc][q.id] = answer;
     });
   });
 
-  // Send to your webhook
   try {
-    const response = await fetch('https://n8n.sitepreviews.dev/webhook/b9223a9e-8b4a-4235-8b5f-144fcf3f27a4', {
+    const r = await fetch('https://n8n.sitepreviews.dev/webhook/b9223a9e-8b4a-4235-8b5f-144fcf3f27a4', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(result),
     });
-    const respText = await response.text();
-    console.log('Webhook response:', respText);
-  } catch (error) {
-    console.error('Error sending data to webhook:', error);
+    console.log('Webhook:', await r.text());
+  } catch (e) {
+    console.error('Webhook error:', e);
   }
 });
 
