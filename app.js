@@ -14,8 +14,12 @@ const SERVICE_OPTIONS = SERVICES.map(s => ({
 
 /** -----------------------------
  * Question registry
- * ----------------------------- */
+ * -----------------------------
+ * NOTE: We’ll dynamically decide which ones to show for Messaging
+ *       based on the chosen complexity. Others behave normally.
+ */
 const COMMON_QUESTIONS = [
+  // Shared (used by Messaging too, but filtered by complexity)
   {
     id: 'client_materials',
     appliesTo: ['Messaging', 'Naming', 'Strategy'],
@@ -30,6 +34,8 @@ const COMMON_QUESTIONS = [
     type: 'static_select',
     options: ['2', '3', '5', '8'],
   },
+
+  // Naming/Strategy only examples (unchanged)
   {
     id: 'stakeholders_interview',
     appliesTo: ['Naming', 'Strategy'],
@@ -207,6 +213,66 @@ const COMMON_QUESTIONS = [
     type: 'static_select',
     options: ['Zero','One','Two','Three'],
   },
+
+  /** Advertisement-only (no overlaps) */
+  {
+    id: 'advertisement_platforms',
+    appliesTo: ['Advertisement'],
+    label: 'Advertisement: Platforms',
+    type: 'multi_static_select',
+    options: ['Google Ads', 'Facebook', 'Instagram', 'LinkedIn', 'Other'],
+  },
+  {
+    id: 'advertisement_budget',
+    appliesTo: ['Advertisement'],
+    label: 'Advertisement: What is your budget?',
+    type: 'plain_text_input',
+    placeholder: 'e.g. $5000/month',
+  },
+  {
+    id: 'advertisement_duration',
+    appliesTo: ['Advertisement'],
+    label: 'Advertisement: Campaign Duration (weeks)',
+    type: 'static_select',
+    options: ['2 weeks', '4 weeks', '8 weeks'],
+  },
+
+  /** Naming-only (non-complexity) */
+  {
+    id: 'naming_creative_territories',
+    appliesTo: ['Naming'],
+    label: 'Naming: How many unique creative naming territories?',
+    type: 'static_select',
+    options: ['2', '4', '6'],
+  },
+  {
+    id: 'naming_options',
+    appliesTo: ['Naming'],
+    label: 'Naming: How many naming options?',
+    type: 'static_select',
+    options: ['100', '200', '300', '400'],
+  },
+  {
+    id: 'naming_prescreened_candidates',
+    appliesTo: ['Naming'],
+    label: 'Naming: How many pre-screened name candidates?',
+    type: 'static_select',
+    options: ['10', '20', '30'],
+  },
+  {
+    id: 'naming_legal_vetted',
+    appliesTo: ['Naming'],
+    label: 'Naming: How many shortlist name candidates are legally vetted?',
+    type: 'static_select',
+    options: ['3', '6', '8', '10'],
+  },
+  {
+    id: 'naming_shortlist_legal_vetting',
+    appliesTo: ['Naming'],
+    label: 'Naming: How many shortlist name candidates for legal vetting?',
+    type: 'static_select',
+    options: ['30', '50', '70', '100'],
+  },
 ];
 
 /** -----------------------------
@@ -242,7 +308,7 @@ const MESSAGING_COMPLEXITY_QUESTIONS = {
 };
 
 /** -----------------------------
- * Helper functions
+ * Helpers
  * ----------------------------- */
 function buildBlockFromQuestion(q) {
   const block_id = `${q.id}_block`;
@@ -262,9 +328,21 @@ function buildBlockFromQuestion(q) {
       placeholder: { type: 'plain_text', text: 'Select one or more…' },
     };
   } else if (q.type === 'plain_text_input') {
-    element = { type: 'plain_text_input', action_id: q.id };
+    element = {
+      type: 'plain_text_input',
+      action_id: q.id,
+      placeholder: q.placeholder ? { type: 'plain_text', text: q.placeholder } : undefined,
+    };
+  } else {
+    throw new Error(`Unsupported question type: ${q.type}`);
   }
-  return { type: 'input', block_id, label: { type: 'plain_text', text: q.label }, element };
+
+  return {
+    type: 'input',
+    block_id,
+    label: { type: 'plain_text', text: q.label },
+    element,
+  };
 }
 
 function buildComplexityBlock(service) {
@@ -285,6 +363,63 @@ function buildComplexityBlock(service) {
   };
 }
 
+/**
+ * Build the Service Details blocks based on:
+ * - selected services
+ * - current (partial) state (to know chosen complexity per service)
+ * - Only show Messaging questions allowed by chosen complexity
+ * - Show all other services' applicable questions normally
+ */
+function buildServiceDetailsBlocks(meta, stateValues) {
+  const { companyName, projectName, date, selectedServices } = meta;
+  const blocks = [
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*Company:* ${companyName}\n*Project:* ${projectName}\n*Date:* ${date}\n*Services:* ${selectedServices.join(', ')}`,
+      },
+    },
+  ];
+
+  // Add complexity pickers
+  selectedServices.forEach(svc => {
+    blocks.push({ type: 'divider' });
+    blocks.push({ type: 'header', text: { type: 'plain_text', text: `${svc} · Complexity` } });
+    blocks.push(buildComplexityBlock(svc));
+  });
+
+  // Figure out which questions to show
+  const allowedIds = new Set();
+
+  selectedServices.forEach(svc => {
+    if (svc === 'Messaging') {
+      const blockId = `${svc.toLowerCase()}_complexity_level_block`;
+      const selectedComplexity =
+        stateValues?.[blockId]?.complexity_level?.selected_option?.value || null;
+
+      if (selectedComplexity && MESSAGING_COMPLEXITY_QUESTIONS[selectedComplexity]) {
+        MESSAGING_COMPLEXITY_QUESTIONS[selectedComplexity].forEach(id => allowedIds.add(id));
+      }
+    } else {
+      // Non-Messaging services: include all questions that apply to them
+      COMMON_QUESTIONS
+        .filter(q => q.appliesTo.includes(svc))
+        .forEach(q => allowedIds.add(q.id));
+    }
+  });
+
+  if (allowedIds.size > 0) {
+    blocks.push({ type: 'divider' });
+    blocks.push({ type: 'header', text: { type: 'plain_text', text: 'Questions' } });
+    COMMON_QUESTIONS
+      .filter(q => allowedIds.has(q.id))
+      .forEach(q => blocks.push(buildBlockFromQuestion(q)));
+  }
+
+  return blocks;
+}
+
 /** -----------------------------
  * Slack app
  * ----------------------------- */
@@ -297,47 +432,63 @@ const app = new App({
 
 app.command('/service', async ({ ack, body, client }) => {
   await ack();
-  await client.views.open({
-    trigger_id: body.trigger_id,
-    view: {
-      type: 'modal',
-      callback_id: 'service_intro_modal',
-      title: { type: 'plain_text', text: 'Project Kickoff' },
-      submit: { type: 'plain_text', text: 'Next' },
-      close: { type: 'plain_text', text: 'Cancel' },
-      blocks: [
-        { type: 'header', text: { type: 'plain_text', text: 'Submitting Details' } },
-        {
-          type: 'input',
-          block_id: 'company_name_block',
-          label: { type: 'plain_text', text: 'Company Name' },
-          element: { type: 'plain_text_input', action_id: 'company_name' },
-        },
-        {
-          type: 'input',
-          block_id: 'project_name_block',
-          label: { type: 'plain_text', text: 'Project Name' },
-          element: { type: 'plain_text_input', action_id: 'project_name' },
-        },
-        {
-          type: 'input',
-          block_id: 'date_block',
-          label: { type: 'plain_text', text: 'Date' },
-          element: { type: 'datepicker', action_id: 'date' },
-        },
-        {
-          type: 'input',
-          block_id: 'services_block',
-          label: { type: 'plain_text', text: 'Services We Offer' },
-          element: {
-            type: 'multi_static_select',
-            action_id: 'services',
-            options: SERVICE_OPTIONS,
+  try {
+    await client.views.open({
+      trigger_id: body.trigger_id,
+      view: {
+        type: 'modal',
+        callback_id: 'service_intro_modal',
+        title: { type: 'plain_text', text: 'Project Kickoff' },
+        submit: { type: 'plain_text', text: 'Next' },
+        close: { type: 'plain_text', text: 'Cancel' },
+        blocks: [
+          { type: 'header', text: { type: 'plain_text', text: 'Submitting Details' } },
+          {
+            type: 'input',
+            block_id: 'company_name_block',
+            label: { type: 'plain_text', text: 'Company Name' },
+            element: {
+              type: 'plain_text_input',
+              action_id: 'company_name',
+              placeholder: { type: 'plain_text', text: 'Enter company name' },
+            },
           },
-        },
-      ],
-    },
-  });
+          {
+            type: 'input',
+            block_id: 'project_name_block',
+            label: { type: 'plain_text', text: 'Project Name' },
+            element: {
+              type: 'plain_text_input',
+              action_id: 'project_name',
+              placeholder: { type: 'plain_text', text: 'Enter project name' },
+            },
+          },
+          {
+            type: 'input',
+            block_id: 'date_block',
+            label: { type: 'plain_text', text: 'Date' },
+            element: {
+              type: 'datepicker',
+              action_id: 'date',
+              placeholder: { type: 'plain_text', text: 'Select a date' },
+            },
+          },
+          {
+            type: 'input',
+            block_id: 'services_block',
+            label: { type: 'plain_text', text: 'Services We Offer' },
+            element: {
+              type: 'multi_static_select',
+              action_id: 'services',
+              options: SERVICE_OPTIONS,
+            },
+          },
+        ],
+      },
+    });
+  } catch (error) {
+    console.error('Error opening service intro modal:', error);
+  }
 });
 
 app.view('service_intro_modal', async ({ ack, view }) => {
@@ -345,22 +496,24 @@ app.view('service_intro_modal', async ({ ack, view }) => {
   const companyName = values.company_name_block.company_name.value;
   const projectName = values.project_name_block.project_name.value;
   const date = values.date_block.date.selected_date;
-  const selectedServices = values.services_block.services.selected_options.map(opt => opt.value);
+  const selectedServices =
+    values.services_block.services.selected_options.map(opt => opt.value);
 
   if (!companyName || !projectName || !date || selectedServices.length === 0) {
-    await ack({ response_action: 'errors', errors: { company_name_block: 'Missing fields' } });
+    await ack({
+      response_action: 'errors',
+      errors: {
+        company_name_block: !companyName ? 'Company name is required' : undefined,
+        project_name_block: !projectName ? 'Project name is required' : undefined,
+        date_block: !date ? 'Please select a date' : undefined,
+        services_block: selectedServices.length === 0 ? 'Select at least one service' : undefined,
+      },
+    });
     return;
   }
 
-  const blocks = [
-    { type: 'section', text: { type: 'mrkdwn', text: `*Company:* ${companyName}\n*Project:* ${projectName}\n*Date:* ${date}\n*Services:* ${selectedServices.join(', ')}` } },
-  ];
-
-  selectedServices.forEach(svc => {
-    blocks.push({ type: 'divider' });
-    blocks.push({ type: 'header', text: { type: 'plain_text', text: `${svc} · Complexity` } });
-    blocks.push(buildComplexityBlock(svc));
-  });
+  const meta = { companyName, projectName, date, selectedServices };
+  const blocks = buildServiceDetailsBlocks(meta, /* stateValues */ undefined);
 
   await ack({
     response_action: 'update',
@@ -370,15 +523,48 @@ app.view('service_intro_modal', async ({ ack, view }) => {
       title: { type: 'plain_text', text: 'Service Details' },
       submit: { type: 'plain_text', text: 'Submit' },
       close: { type: 'plain_text', text: 'Cancel' },
-      private_metadata: JSON.stringify({ companyName, projectName, date, selectedServices }),
+      private_metadata: JSON.stringify(meta),
       blocks,
     },
   });
 });
 
+/**
+ * Interactivity: When a complexity value is chosen, rebuild the modal in-place
+ * to include only the Messaging questions for that chosen complexity.
+ */
+app.action('complexity_level', async ({ ack, body, client }) => {
+  await ack();
+
+  const meta = JSON.parse(body.view.private_metadata || '{}');
+  const stateValues = body.view.state.values;
+
+  const blocks = buildServiceDetailsBlocks(meta, stateValues);
+
+  try {
+    await client.views.update({
+      view_id: body.view.id,
+      hash: body.view.hash, // prevent race condition
+      view: {
+        type: 'modal',
+        callback_id: 'service_details_modal',
+        title: { type: 'plain_text', text: 'Service Details' },
+        submit: { type: 'plain_text', text: 'Submit' },
+        close: { type: 'plain_text', text: 'Cancel' },
+        private_metadata: body.view.private_metadata,
+        blocks,
+      },
+    });
+  } catch (err) {
+    console.error('Error updating view on complexity change:', err);
+  }
+});
+
 app.view('service_details_modal', async ({ ack, view, body }) => {
   await ack();
-  const { companyName, projectName, date, selectedServices } = JSON.parse(view.private_metadata || '{}');
+
+  const { companyName, projectName, date, selectedServices } =
+    JSON.parse(view.private_metadata || '{}');
   const values = view.state.values;
 
   const result = {
@@ -390,46 +576,62 @@ app.view('service_details_modal', async ({ ack, view, body }) => {
     service_details: {},
   };
 
-  // Read per-service complexity
+  // 1) Read per-service complexity answers
   const complexityMap = {};
   selectedServices.forEach(service => {
     const blockId = `${service.toLowerCase()}_complexity_level_block`;
-    const complexity = values[blockId]?.complexity_level?.selected_option?.value || null;
-    result.service_details[service] = { complexity_level: complexity };
+    const complexity =
+      values[blockId]?.complexity_level?.selected_option?.value || null;
+
+    result.service_details[service] = {
+      complexity_level: complexity,
+    };
     complexityMap[service] = complexity;
   });
 
-  // Read all visible questions
+  // 2) Read shown question answers only (those blocks exist in the view)
   COMMON_QUESTIONS.forEach(q => {
     const blockId = `${q.id}_block`;
-    if (!values[blockId]) return;
+    if (!values[blockId]) return; // not in the current view
+
+    let answer;
     const el = values[blockId][q.id];
-    let answer = q.type === 'static_select' ? el?.selected_option?.value : el?.value;
+    if (q.type === 'static_select') {
+      answer = el?.selected_option?.value || null;
+    } else if (q.type === 'multi_static_select') {
+      answer = (el?.selected_options || []).map(o => o.value);
+    } else if (q.type === 'plain_text_input') {
+      answer = el?.value || null;
+    }
 
     selectedServices.forEach(svc => {
+      // Apply Messaging filtering logic
       if (svc === 'Messaging') {
-        const allowed = MESSAGING_COMPLEXITY_QUESTIONS[complexityMap[svc]] || [];
-        if (!allowed.includes(q.id)) return;
+        const allowedIds = MESSAGING_COMPLEXITY_QUESTIONS[complexityMap[svc]] || [];
+        if (!allowedIds.includes(q.id)) return; // skip irrelevant Messaging questions
       }
+
       if (!q.appliesTo.includes(svc)) return;
       if (!result.service_details[svc]) result.service_details[svc] = {};
       result.service_details[svc][q.id] = answer;
     });
   });
 
+  // Send to your webhook
   try {
-    const r = await fetch('https://n8n.sitepreviews.dev/webhook/b9223a9e-8b4a-4235-8b5f-144fcf3f27a4', {
+    const response = await fetch('https://n8n.sitepreviews.dev/webhook/b9223a9e-8b4a-4235-8b5f-144fcf3f27a4', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(result),
     });
-    console.log('Webhook:', await r.text());
-  } catch (e) {
-    console.error('Webhook error:', e);
+    const respText = await response.text();
+    console.log('Webhook response:', respText);
+  } catch (error) {
+    console.error('Error sending data to webhook:', error);
   }
 });
 
 (async () => {
   await app.start(process.env.PORT || 3000);
-  console.log('⚡️ Slack Bolt app running!');
+  console.log('⚡️ Slack Bolt app is running!');
 })();
