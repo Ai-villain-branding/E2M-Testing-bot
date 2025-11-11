@@ -108,14 +108,14 @@ const COMMON_QUESTIONS = [
     appliesTo: ['Messaging'],
     label: 'How many hour worksession with internal teams and leadership?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['1-hour', '90-minutes', '2-hours', '4-hours'],
   },
   {
     id: 'messaging_core_messages_aligned',
     appliesTo: ['Messaging'],
     label: 'How many core messages aligned to the Client’s strategic vision?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['Zero', 'One', 'Two', 'Eight'],
   },
   {
     id: 'messaging_interviews_with_internal_stakeholders',
@@ -129,14 +129,14 @@ const COMMON_QUESTIONS = [
     appliesTo: ['Messaging'],
     label: 'How many best practices communication assets?',
     type: 'static_select',
-    options: ['Zero', 'Three', 'Five', 'Seven'],
+    options: ['Zero', 'Three', 'Five', 'Eight'],
   },
   {
     id: 'messaging_payment_timeline_from_the_invoice',
     appliesTo: ['Messaging'],
     label: 'What is the payment timeline from the invoice date for work delivered to the client?',
     type: 'static_select',
-    options: ['15 days', '30 days', '45 days', '60 days'],
+    options: ['30 days', '45 days', '60 days','90 days'],
   },
   {
     id: 'messaging_product_information_session',
@@ -199,7 +199,7 @@ const COMMON_QUESTIONS = [
     appliesTo: ['Messaging'],
     label: 'How many clear behavioral commitments?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['Zero', 'Three', 'Five', 'Eight'],
   },
 
   /** Advertisement-only (no overlaps) */
