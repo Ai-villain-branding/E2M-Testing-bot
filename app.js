@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { App } = require('@slack/bolt');
-const fetch = require('node-fetch'); // For Node <18, else remove if using Node 18+
+const fetch = require('node-fetch');
 
 /** -----------------------------
  * Services (unchanged)
@@ -13,23 +13,22 @@ const SERVICE_OPTIONS = SERVICES.map(s => ({
 
 /** -----------------------------
  * Questions registry
- * (Messaging questions exist here; we choose which to show later)
  * ----------------------------- */
 const COMMON_QUESTIONS = [
-  // Shared (used by Messaging too, filtered by complexity)
+  // Shared
   {
     id: 'client_materials',
     appliesTo: ['Messaging', 'Naming', 'Strategy'],
     label: 'How many client materials to review?',
     type: 'static_select',
-    options: ['3', '5', '10', '15'],
+    options: ['3 (Three)', '5 (Five)', '10 (Ten)', '15 (Fifteen)'],
   },
   {
     id: 'competitors_analyze',
     appliesTo: ['Messaging', 'Naming', 'Strategy'],
     label: 'How many competitors to analyze?',
     type: 'static_select',
-    options: ['2', '3', '5', '8'],
+    options: ['2 (Two)', '3 (Three)', '5 (Five)', '8 (Eight)'],
   },
 
   /** Messaging-only */
@@ -45,35 +44,35 @@ const COMMON_QUESTIONS = [
     appliesTo: ['Messaging'],
     label: 'How many rounds of review?',
     type: 'static_select',
-    options: ['None', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_primary_target_audiences',
     appliesTo: ['Messaging'],
     label: 'How many primary target audiences should be prioritised?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_sharp_messaging_themes',
     appliesTo: ['Messaging'],
-    label: 'How many sharp messaging themes to anchor all launch communications?',
+    label: 'How many sharp messaging themes?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_headline_options',
     appliesTo: ['Messaging'],
     label: 'How many headline options?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_topline_demos_of_existing_products',
     appliesTo: ['Messaging'],
-    label: 'How many topline demos of existing products and product roadmaps to attend?',
+    label: 'How many topline demos?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_facilitate_the_work',
@@ -85,124 +84,124 @@ const COMMON_QUESTIONS = [
   {
     id: 'messaging_top-level_messages',
     appliesTo: ['Messaging'],
-    label: 'How many top-level messages are aligned with the strategic vision?',
+    label: 'How many top-level messages?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_rounds_of_refinement',
     appliesTo: ['Messaging'],
     label: 'How many rounds of refinement?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_dedicated_rounds_of_internal_feedback',
     appliesTo: ['Messaging'],
-    label: 'How many dedicated rounds of internal feedback and revisions to final deliverables?',
+    label: 'How many internal feedback rounds?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_hour_worksession_with_internal_teams',
     appliesTo: ['Messaging'],
-    label: 'How many hour worksession with internal teams and leadership?',
+    label: 'How many hours worksession?',
     type: 'static_select',
     options: ['1-hour', '90-minutes', '2-hours', '4-hours'],
   },
   {
     id: 'messaging_core_messages_aligned',
     appliesTo: ['Messaging'],
-    label: 'How many core messages aligned to the Client’s strategic vision?',
+    label: 'How many core messages?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Eight'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '8 (Eight)'],
   },
   {
     id: 'messaging_interviews_with_internal_stakeholders',
     appliesTo: ['Messaging'],
-    label: 'How many interviews with internal stakeholders?',
+    label: 'How many interviews?',
     type: 'static_select',
-    options: ['Zero', 'Three', 'Five', 'Seven'],
+    options: ['0 (Zero)', '3 (Three)', '5 (Five)', '7 (Seven)'],
   },
   {
     id: 'messaging_best_practices_communication',
     appliesTo: ['Messaging'],
-    label: 'How many best practices communication assets?',
+    label: 'How many best-practice assets?',
     type: 'static_select',
-    options: ['Zero', 'Three', 'Five', 'Eight'],
+    options: ['0 (Zero)', '3 (Three)', '5 (Five)', '8 (Eight)'],
   },
   {
     id: 'messaging_payment_timeline_from_the_invoice',
     appliesTo: ['Messaging'],
-    label: 'What is the payment timeline from the invoice date for work delivered to the client?',
+    label: 'Payment timeline?',
     type: 'static_select',
-    options: ['30 days', '45 days', '60 days','90 days'],
+    options: ['30 days', '45 days', '60 days', '90 days'],
   },
   {
     id: 'messaging_product_information_session',
     appliesTo: ['Messaging'],
-    label: 'How many product information session led by the client?',
+    label: 'How many product info sessions?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_demos_for_existing_products',
     appliesTo: ['Messaging'],
-    label: 'How many demos for existing products to be attended?',
+    label: 'How many demos?',
     type: 'static_select',
-    options: ['Zero', 'Two', 'Four', 'Six'],
+    options: ['0 (Zero)', '2 (Two)', '4 (Four)', '6 (Six)'],
   },
   {
     id: 'messaging_tailored_version_of_the_message_framework',
     appliesTo: ['Messaging'],
-    label: 'How many tailored version of the message framework to include messaging?',
+    label: 'How many tailored frameworks?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_high_impact_touchpoints',
     appliesTo: ['Messaging'],
     label: 'How many high-impact touchpoints?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_How_many_product_messages',
     appliesTo: ['Messaging'],
     label: 'How many product messages?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_Recommendations_on_how_product',
     appliesTo: ['Messaging'],
-    label: 'How many recommendations on how product messaging integrates?',
+    label: 'How many recommendations?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_60-minute_virtual_workshop',
     appliesTo: ['Messaging'],
-    label: 'How many 60-minute virtual workshop?',
+    label: 'How many virtual workshops?',
     type: 'static_select',
-    options: ['Zero', 'One', 'Two', 'Three'],
+    options: ['0 (Zero)', '1 (One)', '2 (Two)', '3 (Three)'],
   },
   {
     id: 'messaging_do’s_and_don’ts_suggestions',
     appliesTo: ['Messaging'],
-    label: 'How many tactical do’s and don’ts suggestions?',
+    label: 'How many tactical suggestions?',
     type: 'static_select',
-    options: ['Zero', 'Four', 'Eight', 'Twelve'],
+    options: ['0 (Zero)', '4 (Four)', '8 (Eight)', '12 (Twelve)'],
   },
   {
     id: 'messaging_clear_behavioral_commitments',
     appliesTo: ['Messaging'],
-    label: 'How many clear behavioral commitments?',
+    label: 'How many commitments?',
     type: 'static_select',
-    options: ['Zero', 'Three', 'Five', 'Eight'],
+    options: ['0 (Zero)', '3 (Three)', '5 (Five)', '8 (Eight)'],
   },
 
-  /** Advertisement-only (no overlaps) */
+  /** Advertisement-only */
   {
     id: 'advertisement_platforms',
     appliesTo: ['Advertisement'],
@@ -213,58 +212,58 @@ const COMMON_QUESTIONS = [
   {
     id: 'advertisement_budget',
     appliesTo: ['Advertisement'],
-    label: 'Advertisement: What is your budget?',
+    label: 'Advertisement: Budget',
     type: 'plain_text_input',
     placeholder: 'e.g. $5000/month',
   },
   {
     id: 'advertisement_duration',
     appliesTo: ['Advertisement'],
-    label: 'Advertisement: Campaign Duration (weeks)',
+    label: 'Advertisement: Campaign Duration',
     type: 'static_select',
     options: ['2 weeks', '4 weeks', '8 weeks'],
   },
 
-  /** Naming-only (non-complexity) */
+  /** Naming-only */
   {
     id: 'naming_creative_territories',
     appliesTo: ['Naming'],
-    label: 'Naming: How many unique creative naming territories?',
+    label: 'Naming: Creative territories?',
     type: 'static_select',
-    options: ['2', '4', '6'],
+    options: ['2 (Two)', '4 (Four)', '6 (Six)'],
   },
   {
     id: 'naming_options',
     appliesTo: ['Naming'],
-    label: 'Naming: How many naming options?',
+    label: 'Naming: Options?',
     type: 'static_select',
     options: ['100', '200', '300', '400'],
   },
   {
     id: 'naming_prescreened_candidates',
     appliesTo: ['Naming'],
-    label: 'Naming: How many pre-screened name candidates?',
+    label: 'Pre-screened candidates?',
     type: 'static_select',
     options: ['10', '20', '30'],
   },
   {
     id: 'naming_legal_vetted',
     appliesTo: ['Naming'],
-    label: 'Naming: How many shortlist name candidates are legally vetted?',
+    label: 'Legally vetted candidates?',
     type: 'static_select',
     options: ['3', '6', '8', '10'],
   },
   {
     id: 'naming_shortlist_legal_vetting',
     appliesTo: ['Naming'],
-    label: 'Naming: How many shortlist name candidates for legal vetting?',
+    label: 'Shortlist for legal vetting?',
     type: 'static_select',
     options: ['30', '50', '70', '100'],
   },
 ];
 
 /** -----------------------------
- * Messaging Complexity → Question IDs
+ * Messaging Complexity (unchanged)
  * ----------------------------- */
 const MESSAGING_COMPLEXITY_QUESTIONS = {
   Light: [
